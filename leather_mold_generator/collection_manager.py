@@ -75,7 +75,11 @@ class CollectionManager:
         if existing_master is None:
             return
 
+        mesh_data = existing_master.data
         bpy.data.objects.remove(existing_master, do_unlink=True)
+
+        if isinstance(mesh_data, bpy.types.Mesh) and mesh_data.users == 0:
+            bpy.data.meshes.remove(mesh_data)
 
     def _move_object_to_collection(
         self,
@@ -88,10 +92,11 @@ class CollectionManager:
             obj: Object to relocate.
             collection: Destination collection.
         """
-        for user_collection in obj.users_collection:
+        for user_collection in list(obj.users_collection):
             user_collection.objects.unlink(obj)
 
-        collection.objects.link(obj)
+        if obj not in collection.objects:
+           collection.objects.link(obj)
 
     def _make_active(self, obj: bpy.types.Object) -> None:
         """Deselect all objects, select the target, and make it active.
