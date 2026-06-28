@@ -6,6 +6,8 @@ Blender operators for the Leather Mold Generator.
 
 import bpy
 
+from .mold_generator import MoldGenerator
+
 
 class OBJECT_OT_GenerateLeatherMold(bpy.types.Operator):
     """Generate a leather mold from the selected object."""
@@ -16,22 +18,14 @@ class OBJECT_OT_GenerateLeatherMold(bpy.types.Operator):
 
     def execute(self, context):
 
-        active_object = context.active_object
-
-        if active_object is None:
-            self.report(
-                {'ERROR'},
-                "Please select an STL object first."
-            )
+        try:
+            generator = MoldGenerator(context)
+            generator.generate()
+        except ValueError as error:
+            self.report({'ERROR'}, str(error))
             return {'CANCELLED'}
 
-        self.report(
-            {'INFO'},
-            f"Selected object: {active_object.name}"
-        )
-
-        # Geometry generation will be added in Version 0.2
-
+        self.report({'INFO'}, "Mold master created successfully.")
         return {'FINISHED'}
 
 
