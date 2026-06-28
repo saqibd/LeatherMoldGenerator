@@ -95,8 +95,11 @@ class CollectionManager:
         for user_collection in list(obj.users_collection):
             user_collection.objects.unlink(obj)
 
-        if obj not in collection.objects:
-           collection.objects.link(obj)
+        try:
+            collection.objects.link(obj)
+        except RuntimeError:
+            # Object is already linked to this collection.
+            pass
 
     def _make_active(self, obj: bpy.types.Object) -> None:
         """Deselect all objects, select the target, and make it active.
