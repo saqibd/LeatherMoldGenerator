@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Blender backup files
+*.blend1
+
+# Build output
+dist/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
