@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import bpy
 
-LEATHER_MOLD_COLLECTION_NAME = "Leather Mold"
-MOLD_MASTER_OBJECT_NAME = "Mold_Master"
+from .constants import LEATHER_MOLD_COLLECTION_NAME, MOLD_MASTER_OBJECT_NAME
 
 
 class CollectionManager:
@@ -53,7 +52,7 @@ class CollectionManager:
         if source_object is None:
             raise ValueError("No active object to duplicate.")
 
-        self._remove_existing_master()
+        self.delete_object(MOLD_MASTER_OBJECT_NAME)
 
         duplicate = source_object.copy()
         if source_object.data is not None:
@@ -64,19 +63,36 @@ class CollectionManager:
         leather_mold_collection = self.get_or_create_collection(
             LEATHER_MOLD_COLLECTION_NAME
         )
-        self._move_object_to_collection(duplicate, leather_mold_collection)
+        self.move_object_to_collection(duplicate, leather_mold_collection)
         self._make_active(duplicate)
 
         return duplicate
 
-    def _remove_existing_master(self) -> None:
-        """Delete any existing object named ``Mold_Master``."""
-        existing_master = bpy.data.objects.get(MOLD_MASTER_OBJECT_NAME)
-        if existing_master is None:
+    def move_object_to_collection(
+        self,
+        obj: bpy.types.Object,
+        collection: bpy.types.Collection,
+    ) -> None:
+        """Move an object into a single collection.
+
+        Args:
+            obj: Object to relocate.
+            collection: Destination collection.
+        """
+        self._move_object_to_collection(obj, collection)
+
+    def delete_object(self, object_name: str) -> None:
+        """Delete a named object and its unused mesh datablock.
+
+        Args:
+            object_name: Name of the object to delete.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
             return
 
-        mesh_data = existing_master.data
-        bpy.data.objects.remove(existing_master, do_unlink=True)
+        mesh_data = obj.data
+        bpy.data.objects.remove(obj, do_unlink=True)
 
         if isinstance(mesh_data, bpy.types.Mesh) and mesh_data.users == 0:
             bpy.data.meshes.remove(mesh_data)

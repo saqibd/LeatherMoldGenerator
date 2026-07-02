@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import bpy
 
+from .block_generator import BlockGenerator
 from .collection_manager import CollectionManager
 
 
@@ -36,5 +37,8 @@ class MoldGenerator:
 
         collection_manager = CollectionManager(self.context)
         mold_master = collection_manager.duplicate_active_object()
+
+        block_generator = BlockGenerator(self.context)
+        mold_block = block_generator.create_block()
 
         return mold_master
