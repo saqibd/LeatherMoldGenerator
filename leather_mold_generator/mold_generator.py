@@ -39,6 +39,6 @@ class MoldGenerator:
         mold_master = collection_manager.duplicate_active_object()
 
         block_generator = BlockGenerator(self.context)
-        mold_block = block_generator.create_block()
+        mold_block = block_generator.create_block(mold_master)
 
         return mold_master

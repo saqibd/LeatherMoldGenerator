@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import bpy
 
+from mathutils import Vector
+
 from .collection_manager import CollectionManager
 from .constants import LEATHER_MOLD_COLLECTION_NAME, MOLD_BLOCK_OBJECT_NAME
 
@@ -23,10 +25,16 @@ class BlockGenerator:
         """
         self.context = context
 
-    def create_block(self) -> bpy.types.Object:
+    def create_block(
+        self,
+        mold_master: bpy.types.Object,
+    ) -> bpy.types.Object:
         """Create a cube block and move it into the Leather Mold collection.
 
         The block dimensions are set using the current scene settings.
+
+        Args:
+            mold_master: The mold master object used to position the block.
 
         Returns:
             The newly created cube object.
@@ -56,6 +64,7 @@ class BlockGenerator:
                 settings.block_height,
             )
             self.context.view_layer.update()
+            self.position_block(block, mold_master)
 
         leather_mold_collection = collection_manager.get_or_create_collection(
             LEATHER_MOLD_COLLECTION_NAME
@@ -63,3 +72,30 @@ class BlockGenerator:
         collection_manager.move_object_to_collection(block, leather_mold_collection)
 
         return block
+
+    def position_block(
+        self,
+        block: bpy.types.Object,
+        mold_master: bpy.types.Object,
+    ) -> None:
+        """Position the block at the world-space center of the mold master.
+
+        Args:
+            block: The block object to position.
+            mold_master: The mold master object that defines the center.
+        """
+        corners = [
+            mold_master.matrix_world @ Vector(corner)
+            for corner in mold_master.bound_box
+        ]
+
+        min_x = min(c.x for c in corners)
+        min_y = min(c.y for c in corners)
+        min_z = min(c.z for c in corners)
+        max_x = max(c.x for c in corners)
+        max_y = max(c.y for c in corners)
+        max_z = max(c.z for c in corners)
+
+        center = sum(corners, Vector()) / len(corners)
+
+        block.location = center
