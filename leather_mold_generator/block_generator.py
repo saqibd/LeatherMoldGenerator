@@ -26,6 +26,8 @@ class BlockGenerator:
     def create_block(self) -> bpy.types.Object:
         """Create a cube block and move it into the Leather Mold collection.
 
+        The block dimensions are set using the current scene settings.
+
         Returns:
             The newly created cube object.
 
@@ -33,7 +35,10 @@ class BlockGenerator:
             ValueError: If the cube could not be created.
         """
         collection_manager = CollectionManager(self.context)
-        collection_manager.delete_object(MOLD_BLOCK_OBJECT_NAME)
+        collection_manager.delete_object(
+            MOLD_BLOCK_OBJECT_NAME,
+            delete_copies=True,
+        )
 
         bpy.ops.mesh.primitive_cube_add()
 
@@ -43,7 +48,15 @@ class BlockGenerator:
 
         block.name = MOLD_BLOCK_OBJECT_NAME
 
-        collection_manager = CollectionManager(self.context)
+        settings = getattr(self.context.scene, "leather_mold", None)
+        if settings is not None:
+            block.dimensions = (
+                settings.block_width,
+                settings.block_depth,
+                settings.block_height,
+            )
+            self.context.view_layer.update()
+
         leather_mold_collection = collection_manager.get_or_create_collection(
             LEATHER_MOLD_COLLECTION_NAME
         )

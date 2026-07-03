@@ -81,12 +81,33 @@ class CollectionManager:
         """
         self._move_object_to_collection(obj, collection)
 
-    def delete_object(self, object_name: str) -> None:
+    def delete_object(self, object_name: str, delete_copies: bool = False) -> None:
         """Delete a named object and its unused mesh datablock.
 
         Args:
             object_name: Name of the object to delete.
+            delete_copies: If True, also delete numbered copies.
         """
+        if delete_copies:
+            object_names = [
+                name
+                for name in bpy.data.objects.keys()
+                if name == object_name or name.startswith(f"{object_name}.")
+            ]
+
+            for name in object_names:
+                obj = bpy.data.objects.get(name)
+                if obj is None:
+                    continue
+
+                mesh_data = obj.data
+                bpy.data.objects.remove(obj, do_unlink=True)
+
+                if isinstance(mesh_data, bpy.types.Mesh) and mesh_data.users == 0:
+                    bpy.data.meshes.remove(mesh_data)
+
+            return
+
         obj = bpy.data.objects.get(object_name)
         if obj is None:
             return
