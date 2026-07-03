@@ -56,15 +56,9 @@ class BlockGenerator:
 
         block.name = MOLD_BLOCK_OBJECT_NAME
 
-        settings = getattr(self.context.scene, "leather_mold", None)
-        if settings is not None:
-            block.dimensions = (
-                settings.block_width,
-                settings.block_depth,
-                settings.block_height,
-            )
-            self.context.view_layer.update()
-            self.position_block(block, mold_master)
+        self.size_block(block, mold_master)
+        self.context.view_layer.update()
+        self.position_block(block, mold_master)
 
         leather_mold_collection = collection_manager.get_or_create_collection(
             LEATHER_MOLD_COLLECTION_NAME
@@ -99,3 +93,51 @@ class BlockGenerator:
         center = sum(corners, Vector()) / len(corners)
 
         block.location = center
+
+    def size_block(
+        self,
+        block: bpy.types.Object,
+        mold_master: bpy.types.Object,
+    ) -> None:
+        """Size the block to match the mold master's bounding-box dimensions.
+
+        Args:
+            block: The block object to size.
+            mold_master: The mold master object used for size measurements.
+        """
+        width, depth, height = self.get_bounding_box_dimensions(mold_master)
+        block.dimensions = (
+            width,
+            depth,
+            height,
+        )
+
+    def get_bounding_box_dimensions(
+        self,
+        mold_master: bpy.types.Object,
+    ) -> tuple[float, float, float]:
+        """Return the world-space dimensions of the mold master's bounding box.
+
+        Args:
+            mold_master: The mold master object used for dimension calculation.
+
+        Returns:
+            Tuple containing width, depth, and height.
+        """
+        corners = [
+            mold_master.matrix_world @ Vector(corner)
+            for corner in mold_master.bound_box
+        ]
+
+        min_x = min(c.x for c in corners)
+        min_y = min(c.y for c in corners)
+        min_z = min(c.z for c in corners)
+        max_x = max(c.x for c in corners)
+        max_y = max(c.y for c in corners)
+        max_z = max(c.z for c in corners)
+
+        width = max_x - min_x
+        depth = max_y - min_y
+        height = max_z - min_z
+
+        return width, depth, height
