@@ -57,7 +57,6 @@ class BlockGenerator:
         block.name = MOLD_BLOCK_OBJECT_NAME
 
         self.size_block(block, mold_master)
-        self.context.view_layer.update()
         self.position_block(block, mold_master)
 
         leather_mold_collection = collection_manager.get_or_create_collection(
@@ -105,11 +104,29 @@ class BlockGenerator:
             block: The block object to size.
             mold_master: The mold master object used for size measurements.
         """
+        settings = getattr(self.context.scene, "leather_mold", None)
         width, depth, height = self.get_bounding_box_dimensions(mold_master)
-        block.dimensions = (
-            width,
-            depth,
-            height,
+
+        if settings is None:
+            block.scale = (
+                width / 2.0,
+                depth / 2.0,
+                height / 2.0,
+            )
+            return
+
+        block_width = width + (2 * settings.side_margin)
+        block_depth = depth + (2 * settings.front_back_margin)
+        block_height = (
+            height
+            + settings.bottom_thickness
+            + settings.top_clearance
+        )
+
+        block.scale = (
+            block_width / 2.0,
+            block_depth / 2.0,
+            block_height / 2.0,
         )
 
     def get_bounding_box_dimensions(

@@ -32,27 +32,35 @@ class LeatherMoldProperties(PropertyGroup):
         unit='LENGTH',
     )
 
-    block_width: FloatProperty(
-        name="Block Width",
-        description="Width of the mold block",
-        default=120.0,
-        min=20.0,
+    side_margin: FloatProperty(
+        name="Side Margin",
+        description="Margin added to both sides of the mold master width",
+        default=10.0,
+        min=0.0,
         unit='LENGTH',
     )
 
-    block_depth: FloatProperty(
-        name="Block Depth",
-        description="Depth of the mold block",
-        default=120.0,
-        min=20.0,
+    front_back_margin: FloatProperty(
+        name="Front / Back Margin",
+        description="Margin added to front and back of the mold master depth",
+        default=10.0,
+        min=0.0,
         unit='LENGTH',
     )
 
-    block_height: FloatProperty(
-        name="Block Height",
-        description="Height of the mold block",
-        default=30.0,
-        min=10.0,
+    bottom_thickness: FloatProperty(
+        name="Bottom Thickness",
+        description="Additional thickness added below the mold master",
+        default=20.0,
+        min=0.0,
+        unit='LENGTH',
+    )
+
+    top_clearance: FloatProperty(
+        name="Top Clearance",
+        description="Additional clearance added above the mold master",
+        default=5.0,
+        min=0.0,
         unit='LENGTH',
     )
 

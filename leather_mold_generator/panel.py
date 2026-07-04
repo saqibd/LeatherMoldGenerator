@@ -32,15 +32,16 @@ class VIEW3D_PT_LeatherMoldPanel(bpy.types.Panel):
         leather_box.prop(settings, "clearance")
 
         # ----------------------------
-        # Mold Block Settings
+        # Block Settings
         # ----------------------------
 
         block_box = layout.box()
-        block_box.label(text="Mold Block")
+        block_box.label(text="Block Settings")
 
-        block_box.prop(settings, "block_width")
-        block_box.prop(settings, "block_depth")
-        block_box.prop(settings, "block_height")
+        block_box.prop(settings, "side_margin")
+        block_box.prop(settings, "front_back_margin")
+        block_box.prop(settings, "bottom_thickness")
+        block_box.prop(settings, "top_clearance")
 
         # ----------------------------
         # Generate Button
