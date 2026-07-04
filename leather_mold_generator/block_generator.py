@@ -63,8 +63,26 @@ class BlockGenerator:
             LEATHER_MOLD_COLLECTION_NAME
         )
         collection_manager.move_object_to_collection(block, leather_mold_collection)
+        self.add_boolean_modifier(block, mold_master)
 
         return block
+
+    def add_boolean_modifier(
+        self,
+        block: bpy.types.Object,
+        mold_master: bpy.types.Object,
+    ) -> None:
+        """Add an unapplied Boolean difference modifier to the block."""
+        modifier = block.modifiers.new("Mold_Cavity", "BOOLEAN")
+        modifier.operation = "DIFFERENCE"
+        modifier.object = mold_master
+
+        print("===== BOOLEAN MODIFIER =====")
+        print(f"Modifier Name : {modifier.name}")
+        print(f"Modifier Type : {modifier.type}")
+        print(f"Operation     : {modifier.operation}")
+        print(f"Target Object : {modifier.object.name}")
+        print("============================")
 
     def position_block(
         self,
