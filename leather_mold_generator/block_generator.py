@@ -89,9 +89,24 @@ class BlockGenerator:
         max_y = max(c.y for c in corners)
         max_z = max(c.z for c in corners)
 
-        center = sum(corners, Vector()) / len(corners)
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
 
-        block.location = center
+        settings = getattr(self.context.scene, "leather_mold", None)
+        bottom_thickness = (
+            settings.bottom_thickness if settings is not None else 0.0
+        )
+        top_clearance = settings.top_clearance if settings is not None else 0.0
+
+        _, _, model_height = self.get_bounding_box_dimensions(mold_master)
+        block_height = (
+            model_height + bottom_thickness + top_clearance
+        )
+
+        block_bottom = min_z - bottom_thickness
+        block.location.x = center_x
+        block.location.y = center_y
+        block.location.z = block_bottom + (block_height / 2)
 
     def size_block(
         self,
