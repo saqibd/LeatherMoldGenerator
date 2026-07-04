@@ -64,6 +64,7 @@ class BlockGenerator:
         )
         collection_manager.move_object_to_collection(block, leather_mold_collection)
         self.add_boolean_modifier(block, mold_master)
+        self.apply_boolean_modifier(block)
 
         return block
 
@@ -77,12 +78,22 @@ class BlockGenerator:
         modifier.operation = "DIFFERENCE"
         modifier.object = mold_master
 
-        print("===== BOOLEAN MODIFIER =====")
-        print(f"Modifier Name : {modifier.name}")
-        print(f"Modifier Type : {modifier.type}")
-        print(f"Operation     : {modifier.operation}")
-        print(f"Target Object : {modifier.object.name}")
-        print("============================")
+    def apply_boolean_modifier(
+        self,
+        block: bpy.types.Object,
+    ) -> None:
+        """Apply the existing Mold_Cavity boolean modifier to the block."""
+        modifier = block.modifiers.get("Mold_Cavity")
+        if modifier is None:
+            raise ValueError("Boolean modifier 'Mold_Cavity' not found.")
+
+        bpy.ops.object.mode_set(mode="OBJECT")
+        for obj in self.context.selected_objects:
+            obj.select_set(False)
+        block.select_set(True)
+        self.context.view_layer.objects.active = block
+
+        bpy.ops.object.modifier_apply(modifier="Mold_Cavity")
 
     def position_block(
         self,
