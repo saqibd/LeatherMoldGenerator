@@ -95,6 +95,16 @@ class BlockGenerator:
 
         bpy.ops.object.modifier_apply(modifier="Mold_Cavity")
 
+        mold_master = block.modifiers[0].object if block.modifiers else None
+        if mold_master is not None:
+            mold_master.hide_viewport = True
+            mold_master.hide_render = True
+            print("===== MOLD MASTER VISIBILITY =====")
+            print(f"Mold_Master found : {mold_master.name}")
+            print(f"Viewport hidden   : {mold_master.hide_viewport}")
+            print(f"Render hidden     : {mold_master.hide_render}")
+            print("================================")
+
     def position_block(
         self,
         block: bpy.types.Object,
