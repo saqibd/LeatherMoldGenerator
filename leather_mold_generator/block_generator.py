@@ -64,7 +64,7 @@ class BlockGenerator:
         )
         collection_manager.move_object_to_collection(block, leather_mold_collection)
         self.add_boolean_modifier(block, mold_master)
-        self.apply_boolean_modifier(block)
+        self.apply_boolean_modifier(block, mold_master)
 
         return block
 
@@ -81,6 +81,7 @@ class BlockGenerator:
     def apply_boolean_modifier(
         self,
         block: bpy.types.Object,
+        mold_master: bpy.types.Object,
     ) -> None:
         """Apply the existing Mold_Cavity boolean modifier to the block."""
         modifier = block.modifiers.get("Mold_Cavity")
@@ -95,15 +96,14 @@ class BlockGenerator:
 
         bpy.ops.object.modifier_apply(modifier="Mold_Cavity")
 
-        mold_master = block.modifiers[0].object if block.modifiers else None
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+
         if mold_master is not None:
             mold_master.hide_viewport = True
             mold_master.hide_render = True
-            print("===== MOLD MASTER VISIBILITY =====")
-            print(f"Mold_Master found : {mold_master.name}")
-            print(f"Viewport hidden   : {mold_master.hide_viewport}")
-            print(f"Render hidden     : {mold_master.hide_render}")
-            print("================================")
 
     def position_block(
         self,
