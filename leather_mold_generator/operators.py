@@ -20,7 +20,7 @@ class OBJECT_OT_GenerateLeatherMold(bpy.types.Operator):
 
         try:
             generator = MoldGenerator(context)
-            generator.generate()
+            generator.generate(reporter=self)
         except ValueError as error:
             self.report({'ERROR'}, str(error))
             return {'CANCELLED'}

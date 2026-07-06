@@ -23,7 +23,7 @@ class MoldGenerator:
         """
         self.context = context
 
-    def generate(self) -> bpy.types.Object:
+    def generate(self, reporter=None) -> bpy.types.Object:
         """Run the mold generation workflow.
 
         Returns:
@@ -39,6 +39,6 @@ class MoldGenerator:
         mold_master = collection_manager.duplicate_active_object()
 
         block_generator = BlockGenerator(self.context)
-        mold_block = block_generator.create_block(mold_master)
+        mold_block = block_generator.create_block(mold_master, reporter=reporter)
 
         return mold_master

@@ -24,6 +24,22 @@ class BlockGenerator:
             context: Active Blender context used for all operations.
         """
         self.context = context
+        self._current_reporter = None
+
+    def _report(self, message: str, level: str = "INFO") -> None:
+        """Centralized reporting helper that uses an operator reporter when available.
+
+        Falls back to printing to the console if no reporter is set.
+        """
+        reporter = getattr(self, "_current_reporter", None)
+        try:
+            if reporter is not None and hasattr(reporter, "report"):
+                reporter.report({level}, message)
+            else:
+                print(message)
+        except Exception:
+            # Best-effort fallback to console
+            print(message)
 
     def create_block(
         self,
@@ -45,6 +61,8 @@ class BlockGenerator:
         """
         # Preserve Blender state so we can restore if something fails
         previous_active = self.context.view_layer.objects.active
+        # Set centralized reporter for use by helper and other methods
+        self._current_reporter = reporter
         try:
             previous_mode = self.context.object.mode if self.context.object is not None else None
         except Exception:
@@ -94,7 +112,14 @@ class BlockGenerator:
                 bpy.ops.object.mode_set(mode="OBJECT")
             except Exception:
                 pass
+            except Exception:
+                pass
 
+            # Clear centralized reporter
+            try:
+                self._current_reporter = None
+            except Exception:
+                pass
             # Restore selection and active object if possible
             try:
                 for obj in list(self.context.selected_objects):
