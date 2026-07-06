@@ -28,6 +28,7 @@ class BlockGenerator:
     def create_block(
         self,
         mold_master: bpy.types.Object,
+        reporter=None,
     ) -> bpy.types.Object:
         """Create a cube block and move it into the Leather Mold collection.
 
@@ -42,31 +43,101 @@ class BlockGenerator:
         Raises:
             ValueError: If the cube could not be created.
         """
+        # Preserve Blender state so we can restore if something fails
+        previous_active = self.context.view_layer.objects.active
+        try:
+            previous_mode = self.context.object.mode if self.context.object is not None else None
+        except Exception:
+            previous_mode = None
+        previous_selected = list(self.context.selected_objects)
+
         collection_manager = CollectionManager(self.context)
-        collection_manager.delete_object(
-            MOLD_BLOCK_OBJECT_NAME,
-            delete_copies=True,
-        )
+        try:
+            collection_manager.delete_object(
+                MOLD_BLOCK_OBJECT_NAME,
+                delete_copies=True,
+            )
 
-        bpy.ops.mesh.primitive_cube_add()
+            bpy.ops.mesh.primitive_cube_add()
 
-        block = self.context.active_object
-        if block is None:
-            raise ValueError("Failed to create block object.")
+            block = self.context.active_object
+            if block is None:
+                raise ValueError("Failed to create block object.")
 
-        block.name = MOLD_BLOCK_OBJECT_NAME
+            block.name = MOLD_BLOCK_OBJECT_NAME
 
-        self.size_block(block, mold_master)
-        self.position_block(block, mold_master)
+            # Core generation steps
+            self.size_block(block, mold_master)
+            self.position_block(block, mold_master)
 
-        leather_mold_collection = collection_manager.get_or_create_collection(
-            LEATHER_MOLD_COLLECTION_NAME
-        )
-        collection_manager.move_object_to_collection(block, leather_mold_collection)
-        self.add_boolean_modifier(block, mold_master)
-        self.apply_boolean_modifier(block, mold_master)
+            leather_mold_collection = collection_manager.get_or_create_collection(
+                LEATHER_MOLD_COLLECTION_NAME
+            )
+            collection_manager.move_object_to_collection(block, leather_mold_collection)
+            self.add_boolean_modifier(block, mold_master)
+            self.apply_boolean_modifier(block, mold_master)
 
-        return block
+            # On success, ensure Mold_Block is active and Blender is in OBJECT mode
+            try:
+                block.select_set(True)
+                self.context.view_layer.objects.active = block
+                bpy.ops.object.mode_set(mode="OBJECT")
+            except Exception:
+                # Best-effort; do not mask success
+                pass
+
+            success = True
+            return block
+        except Exception as exc:
+            # Attempt to restore Blender to a safe state
+            try:
+                bpy.ops.object.mode_set(mode="OBJECT")
+            except Exception:
+                pass
+
+            # Restore selection and active object if possible
+            try:
+                for obj in list(self.context.selected_objects):
+                    obj.select_set(False)
+                for obj in previous_selected:
+                    try:
+                        obj.select_set(True)
+                    except Exception:
+                        pass
+                if previous_active is not None and previous_active.name in self.context.view_layer.objects:
+                    try:
+                        self.context.view_layer.objects.active = previous_active
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+            # Report error via operator reporter when available
+            try:
+                if reporter is not None and hasattr(reporter, "report"):
+                    reporter.report({"ERROR"}, f"Error generating mold block: {exc}")
+                else:
+                    print(f"Error generating mold block: {exc}")
+            except Exception:
+                print(f"Error generating mold block (and failed to report): {exc}")
+
+            # Re-raise to surface the error to callers (keeps behavior visible for debugging)
+            raise
+        finally:
+            # If we didn't succeed, ensure mode restored to previous_mode where possible
+            try:
+                if 'success' not in locals() or not success:
+                    if previous_mode is not None:
+                        try:
+                            bpy.ops.object.mode_set(mode=previous_mode)
+                        except Exception:
+                            # Fallback to OBJECT mode
+                            try:
+                                bpy.ops.object.mode_set(mode="OBJECT")
+                            except Exception:
+                                pass
+            except Exception:
+                pass
 
     def add_boolean_modifier(
         self,
