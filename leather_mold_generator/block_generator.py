@@ -71,18 +71,7 @@ class BlockGenerator:
 
         collection_manager = CollectionManager(self.context)
         try:
-            collection_manager.delete_object(
-                MOLD_BLOCK_OBJECT_NAME,
-                delete_copies=True,
-            )
-
-            bpy.ops.mesh.primitive_cube_add()
-
-            block = self.context.active_object
-            if block is None:
-                raise ValueError("Failed to create block object.")
-
-            block.name = MOLD_BLOCK_OBJECT_NAME
+            block = self._create_primitive_block(collection_manager)
 
             # Core generation steps
             self.size_block(block, mold_master)
@@ -95,14 +84,8 @@ class BlockGenerator:
             self.add_boolean_modifier(block, mold_master)
             self.apply_boolean_modifier(block, mold_master)
 
-            # On success, ensure Mold_Block is active and Blender is in OBJECT mode
-            try:
-                block.select_set(True)
-                self.context.view_layer.objects.active = block
-                bpy.ops.object.mode_set(mode="OBJECT")
-            except Exception:
-                # Best-effort; do not mask success
-                pass
+            # Finalize generated block (ensure active and in OBJECT mode)
+            self._finalize_block(block)
 
             success = True
             return block
@@ -173,6 +156,36 @@ class BlockGenerator:
         modifier = block.modifiers.new("Mold_Cavity", "BOOLEAN")
         modifier.operation = "DIFFERENCE"
         modifier.object = mold_master
+
+    def _create_primitive_block(self, collection_manager: CollectionManager) -> bpy.types.Object:
+        """Create a primitive cube and prepare it as the mold block.
+
+        This extracts the primitive creation and naming so the orchestration
+        in create_block stays high-level.
+        """
+        collection_manager.delete_object(
+            MOLD_BLOCK_OBJECT_NAME,
+            delete_copies=True,
+        )
+
+        bpy.ops.mesh.primitive_cube_add()
+
+        block = self.context.active_object
+        if block is None:
+            raise ValueError("Failed to create block object.")
+
+        block.name = MOLD_BLOCK_OBJECT_NAME
+        return block
+
+    def _finalize_block(self, block: bpy.types.Object) -> None:
+        """Finalize the generated block: make active and ensure OBJECT mode."""
+        try:
+            block.select_set(True)
+            self.context.view_layer.objects.active = block
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except Exception:
+            # Best-effort; don't mask successful generation
+            pass
 
     def apply_boolean_modifier(
         self,
