@@ -42,6 +42,7 @@ class VIEW3D_PT_LeatherMoldPanel(bpy.types.Panel):
         block_box.prop(settings, "front_back_margin")
         block_box.prop(settings, "bottom_thickness")
         block_box.prop(settings, "top_clearance")
+        block_box.prop(settings, "cavity_tolerance")
 
         # ----------------------------
         # Generate Button

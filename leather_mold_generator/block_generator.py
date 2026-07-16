@@ -76,6 +76,7 @@ class BlockGenerator:
             # Core generation steps
             self.size_block(block, mold_master)
             self.position_block(block, mold_master)
+            self.apply_cavity_tolerance(mold_master)
 
             leather_mold_collection = collection_manager.get_or_create_collection(
                 LEATHER_MOLD_COLLECTION_NAME
@@ -146,6 +147,33 @@ class BlockGenerator:
                                 pass
             except Exception:
                 pass
+
+    def apply_cavity_tolerance(
+        self,
+        mold_master: bpy.types.Object,
+    ) -> None:
+        """Enlarge the mold master uniformly for the Boolean cavity clearance."""
+        if mold_master is None:
+            return
+
+        settings = getattr(self.context.scene, "leather_mold", None)
+        tolerance = getattr(settings, "cavity_tolerance", 0.0) if settings is not None else 0.0
+
+        if tolerance <= 0.0:
+            return
+
+        width, depth, height = self.get_bounding_box_dimensions(mold_master)
+        reference_dimension = max(width, depth, height)
+
+        if reference_dimension <= 0.0:
+            return
+
+        scale_factor = 1.0 + (tolerance / reference_dimension)
+        mold_master.scale = Vector((
+            mold_master.scale.x * scale_factor,
+            mold_master.scale.y * scale_factor,
+            mold_master.scale.z * scale_factor,
+        ))
 
     def add_boolean_modifier(
         self,

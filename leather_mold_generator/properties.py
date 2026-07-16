@@ -64,6 +64,16 @@ class LeatherMoldProperties(PropertyGroup):
         unit='LENGTH',
     )
 
+    cavity_tolerance: FloatProperty(
+        name="Cavity Tolerance",
+        description="Additional clearance applied to the mold cavity before the Boolean operation",
+        default=0.25,
+        min=0.0,
+        soft_max=2.0,
+        precision=2,
+        unit='LENGTH',
+    )
+
 
 def register():
     """Register Blender properties."""
