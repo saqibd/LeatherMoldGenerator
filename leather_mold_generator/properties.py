@@ -4,6 +4,8 @@ properties.py
 Blender Property Groups for the Leather Mold Generator.
 """
 
+import math
+
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import FloatProperty, PointerProperty
@@ -72,6 +74,17 @@ class LeatherMoldProperties(PropertyGroup):
         soft_max=2.0,
         precision=2,
         unit='LENGTH',
+    )
+
+    # Draft angle will be implemented in Sprint 3.1.1.
+    draft_angle: FloatProperty(
+        name="Draft Angle",
+        description="Draft angle applied to mold cavity walls.",
+        default=math.radians(3.0),
+        min=0.0,
+        max=math.radians(15.0),
+        soft_max=math.radians(10.0),
+        subtype='ANGLE',
     )
 
 
