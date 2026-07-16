@@ -11,7 +11,11 @@ import bpy
 from mathutils import Vector
 
 from .collection_manager import CollectionManager
-from .constants import LEATHER_MOLD_COLLECTION_NAME, MOLD_BLOCK_OBJECT_NAME
+from .constants import (
+    LEATHER_MOLD_COLLECTION_NAME,
+    MOLD_BLOCK_OBJECT_NAME,
+    MOLD_MASTER_TEMP_OBJECT_NAME,
+)
 
 
 class BlockGenerator:
@@ -76,14 +80,15 @@ class BlockGenerator:
             # Core generation steps
             self.size_block(block, mold_master)
             self.position_block(block, mold_master)
-            self.apply_cavity_tolerance(mold_master)
 
             leather_mold_collection = collection_manager.get_or_create_collection(
                 LEATHER_MOLD_COLLECTION_NAME
             )
+            cutter = self.create_cavity_cutter(mold_master, collection_manager)
+            self.apply_cavity_tolerance(cutter)
             collection_manager.move_object_to_collection(block, leather_mold_collection)
-            self.add_boolean_modifier(block, mold_master)
-            self.apply_boolean_modifier(block, mold_master)
+            self.add_boolean_modifier(block, cutter)
+            self.apply_boolean_modifier(block, mold_master, cutter)
 
             # Finalize generated block (ensure active and in OBJECT mode)
             self._finalize_block(block)
@@ -148,11 +153,36 @@ class BlockGenerator:
             except Exception:
                 pass
 
+    def create_cavity_cutter(
+        self,
+        mold_master: bpy.types.Object,
+        collection_manager: CollectionManager,
+    ) -> bpy.types.Object:
+        """Create a temporary duplicate of the mold master for Boolean cavity scaling."""
+        if mold_master is None:
+            raise ValueError("Mold master object is required for cavity cutter creation.")
+
+        collection_manager.delete_object(MOLD_MASTER_TEMP_OBJECT_NAME, delete_copies=True)
+
+        cutter = mold_master.copy()
+        if mold_master.data is not None:
+            cutter.data = mold_master.data.copy()
+
+        cutter.name = MOLD_MASTER_TEMP_OBJECT_NAME
+        cutter.hide_viewport = False
+        cutter.hide_render = False
+
+        leather_mold_collection = collection_manager.get_or_create_collection(
+            LEATHER_MOLD_COLLECTION_NAME
+        )
+        collection_manager.move_object_to_collection(cutter, leather_mold_collection)
+        return cutter
+
     def apply_cavity_tolerance(
         self,
         mold_master: bpy.types.Object,
     ) -> None:
-        """Enlarge the mold master uniformly for the Boolean cavity clearance."""
+        """Enlarge the provided cutter uniformly for the Boolean cavity clearance."""
         if mold_master is None:
             return
 
@@ -219,6 +249,7 @@ class BlockGenerator:
         self,
         block: bpy.types.Object,
         mold_master: bpy.types.Object,
+        cutter: bpy.types.Object | None = None,
     ) -> None:
         """Apply the existing Mold_Cavity boolean modifier to the block."""
         modifier = block.modifiers.get("Mold_Cavity")
@@ -237,6 +268,12 @@ class BlockGenerator:
         bpy.ops.mesh.select_all(action="SELECT")
         bpy.ops.mesh.normals_make_consistent(inside=False)
         bpy.ops.object.mode_set(mode="OBJECT")
+
+        if cutter is not None:
+            try:
+                bpy.data.objects.remove(cutter, do_unlink=True)
+            except Exception:
+                pass
 
         if mold_master is not None:
             mold_master.hide_viewport = True
