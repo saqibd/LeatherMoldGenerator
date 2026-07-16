@@ -86,6 +86,7 @@ class BlockGenerator:
             )
             cutter = self.create_cavity_cutter(mold_master, collection_manager)
             self.apply_cavity_tolerance(cutter)
+            self.apply_draft_angle(cutter)
             collection_manager.move_object_to_collection(block, leather_mold_collection)
             self.add_boolean_modifier(block, cutter)
             self.apply_boolean_modifier(block, mold_master, cutter)
@@ -204,6 +205,19 @@ class BlockGenerator:
             mold_master.scale.y * scale_factor,
             mold_master.scale.z * scale_factor,
         ))
+
+    def apply_draft_angle(self, cutter_object: bpy.types.Object) -> None:
+        """Prepare the draft-angle framework without changing geometry yet."""
+        if cutter_object is None:
+            return
+
+        settings = getattr(self.context.scene, "leather_mold", None)
+        draft_angle = getattr(settings, "draft_angle", 0.0) if settings is not None else 0.0
+
+        if draft_angle <= 0.0:
+            return
+
+        self._report("Applying draft angle...")
 
     def add_boolean_modifier(
         self,
