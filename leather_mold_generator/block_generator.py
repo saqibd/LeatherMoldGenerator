@@ -207,7 +207,7 @@ class BlockGenerator:
         ))
 
     def apply_draft_angle(self, cutter_object: bpy.types.Object) -> None:
-        """Prepare the draft-angle framework without changing geometry yet."""
+        """Apply a conservative BMesh taper to the temporary Boolean cutter."""
         if cutter_object is None:
             return
 
@@ -218,6 +218,36 @@ class BlockGenerator:
             return
 
         self._report("Applying draft angle...")
+
+        import bmesh
+
+        mesh = cutter_object.data
+        if mesh is None:
+            return
+
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+
+        try:
+            min_z = min(v.co.z for v in bm.verts)
+            max_z = max(v.co.z for v in bm.verts)
+            height = max_z - min_z
+            if height <= 0.0:
+                return
+
+            radians_angle = draft_angle
+            taper_amount = max(0.0, abs(radians_angle) * 0.01)
+
+            for vertex in bm.verts:
+                factor = (vertex.co.z - min_z) / height
+                offset = factor * taper_amount
+                vertex.co.x += offset
+                vertex.co.y += offset
+
+            bm.to_mesh(mesh)
+            mesh.update()
+        finally:
+            bm.free()
 
     def add_boolean_modifier(
         self,
