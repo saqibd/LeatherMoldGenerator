@@ -16,6 +16,7 @@ from .constants import (
     MOLD_BLOCK_OBJECT_NAME,
     MOLD_MASTER_TEMP_OBJECT_NAME,
 )
+from .geometry_validator import GeometryValidator
 
 
 class BlockGenerator:
@@ -88,6 +89,18 @@ class BlockGenerator:
             self.apply_cavity_tolerance(cutter)
             self.apply_draft_angle(cutter)
             collection_manager.move_object_to_collection(block, leather_mold_collection)
+
+            validator = GeometryValidator()
+            validation_result = validator.validate(cutter)
+            self._report("Geometry Validation")
+            self._report(f"Vertices: {validation_result['vertices']}")
+            self._report(f"Edges: {validation_result['edges']}")
+            self._report(f"Faces: {validation_result['faces']}")
+            self._report(f"Non-manifold: {validation_result['non_manifold_edges']}")
+            self._report(f"Loose Vertices: {validation_result['loose_vertices']}")
+            self._report(f"Zero-area Faces: {validation_result['zero_area_faces']}")
+            self._report("Validation Passed")
+
             self.add_boolean_modifier(block, cutter)
             self.apply_boolean_modifier(block, mold_master, cutter)
 
