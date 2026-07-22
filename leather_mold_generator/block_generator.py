@@ -88,6 +88,7 @@ class BlockGenerator:
             cutter = self.create_cavity_cutter(mold_master, collection_manager)
             self.apply_cavity_tolerance(cutter)
             self.apply_draft_angle(cutter)
+            self.apply_cnc_cleanup(cutter)
             collection_manager.move_object_to_collection(block, leather_mold_collection)
 
             validator = GeometryValidator(reporter)
@@ -288,6 +289,27 @@ class BlockGenerator:
             mesh.update()
         finally:
             bm.free()
+
+    def apply_cnc_cleanup(self, cutter_object: bpy.types.Object) -> None:
+        """Apply a conservative bevel modifier to the temporary Boolean cutter only."""
+        if cutter_object is None:
+            return
+
+        self._report("Applying CNC cleanup...")
+
+        modifier = cutter_object.modifiers.new("CNC_Cleanup", "BEVEL")
+        modifier.width = 0.25
+        modifier.segments = 2
+        modifier.profile = 0.5
+        modifier.limit_method = 'ANGLE'
+        modifier.use_clamp_overlap = False
+        modifier.harden_normals = False
+        modifier.samples = 1
+
+        try:
+            bpy.context.view_layer.update()
+        except Exception:
+            pass
 
     def add_boolean_modifier(
         self,
