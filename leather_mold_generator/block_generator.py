@@ -90,8 +90,8 @@ class BlockGenerator:
             self.apply_draft_angle(cutter)
             collection_manager.move_object_to_collection(block, leather_mold_collection)
 
-            validator = GeometryValidator()
-            validation_result = validator.validate(cutter)
+            validator = GeometryValidator(reporter)
+            validation_result = validator.validate(cutter, block)
             self._report("Geometry Validation")
             self._report(f"Vertices: {validation_result['vertices']}")
             self._report(f"Edges: {validation_result['edges']}")
@@ -100,6 +100,22 @@ class BlockGenerator:
             self._report(f"Loose Vertices: {validation_result['loose_vertices']}")
             self._report(f"Zero-area Faces: {validation_result['zero_area_faces']}")
             self._report("Validation Passed")
+            self._report("Bounding Box Summary")
+            self._report(f"Width: {validation_result['bounding_box'][0]:.2f} mm")
+            self._report(f"Depth: {validation_result['bounding_box'][1]:.2f} mm")
+            self._report(f"Height: {validation_result['bounding_box'][2]:.2f} mm")
+            self._report("Manufacturing Readiness")
+            self._report(f"Maximum Cavity Depth: {validation_result['max_cavity_depth']:.2f} mm")
+            self._report(f"Estimated wall thickness: {validation_result['estimated_wall_thickness']:.2f} mm")
+            self._report(f"Recommended cutter: {validation_result['recommended_cutter']}")
+            if validation_result['manufacturing_warnings']:
+                self._report("Warnings:")
+                for warning in validation_result['manufacturing_warnings']:
+                    self._report(f"- {warning}")
+                self._report("Manufacturing Ready with Warnings")
+            else:
+                self._report("Warnings: None")
+                self._report("Manufacturing Ready")
 
             self.add_boolean_modifier(block, cutter)
             self.apply_boolean_modifier(block, mold_master, cutter)
