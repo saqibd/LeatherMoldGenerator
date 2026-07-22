@@ -116,6 +116,17 @@ class BlockGenerator:
             else:
                 self._report("Warnings: None")
                 self._report("Manufacturing Ready")
+            self._report("Export Readiness")
+            self._report(f"Transforms: {validation_result['transform_status']}")
+            self._report(f"Normals: {validation_result['normal_status']}")
+            self._report(f"Triangles: {validation_result['triangle_count']}")
+            self._report(f"Estimated STL: {validation_result['estimated_stl_size_mb']:.2f} MB")
+            if validation_result['export_warnings']:
+                for warning in validation_result['export_warnings']:
+                    self._report(f"- {warning}")
+                self._report("Export Ready with Warnings")
+            else:
+                self._report("Export Ready")
 
             self.add_boolean_modifier(block, cutter)
             self.apply_boolean_modifier(block, mold_master, cutter)
